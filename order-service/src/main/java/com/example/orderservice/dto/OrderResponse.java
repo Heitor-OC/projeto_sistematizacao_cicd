@@ -1,5 +1,6 @@
 package com.example.orderservice.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,13 +8,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryResponse {
+public class OrderResponse {
 
+    private String message;
+    private String product;
+    private Integer quantity;
     private String status;
     private String truckId;
-    private String reason;
-    private String product;
-    private Integer requestedQuantity;
     private Integer remainingStock;
 
 }

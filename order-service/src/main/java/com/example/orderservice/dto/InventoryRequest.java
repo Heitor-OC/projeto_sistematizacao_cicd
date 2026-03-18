@@ -7,13 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryResponse {
+public class InventoryRequest {
 
-    private String status;
-    private String truckId;
-    private String reason;
     private String product;
-    private Integer requestedQuantity;
-    private Integer remainingStock;
+    private Integer quantity;
+
 
 }
