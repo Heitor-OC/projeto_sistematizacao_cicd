@@ -1,0 +1,53 @@
+name: pipeline de ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  test-order-service:
+    name: (testes) order service
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: order-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: order service run
+        run: mvn clean test
+
+  test-inventory-service:
+    name: (testes) inventory service
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: inventory-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: inventory service run
+        run: mvn clean test
