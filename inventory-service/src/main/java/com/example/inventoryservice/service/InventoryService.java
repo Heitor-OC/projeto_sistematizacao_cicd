@@ -2,22 +2,47 @@ package com.example.inventoryservice.service;
 
 import com.example.inventoryservice.dto.InventoryRequest;
 import com.example.inventoryservice.dto.InventoryResponse;
+import com.example.inventoryservice.repository.InMemoryStockRepository;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 public class InventoryService {
 
-    public InventoryResponse process(InventoryRequest request) {
-        InventoryResponse response = new InventoryResponse();
+    private final InMemoryStockRepository stockRepository;
 
-        if (request.getQuantity() != null && request.getQuantity() > 10) {
-            response.setStatus("REJECTED");
-            response.setReason("OUT_OF_STOCK");
-            return response;
+    public InventoryService(InMemoryStockRepository stockRepository) {
+        this.stockRepository = stockRepository;
+    }
+
+    public InventoryResponse process(InventoryRequest request) {
+        int available = stockRepository.getAvailableQuantity(request.getProduct());
+
+        if (request.getQuantity() > available) {
+            return new InventoryResponse(
+                    "REJECTED",
+                    null,
+                    "OUT_OF_STOCK",
+                    request.getProduct(),
+                    request.getQuantity(),
+                    available
+            );
         }
 
-        response.setStatus("APPROVED");
-        response.setTruckId("TRUCK-1");
-        return response;
+        int remaining = available - request.getQuantity();
+        stockRepository.updateStock(request.getProduct(), remaining);
+
+        return new InventoryResponse(
+                "APPROVED",
+                assignTruck(request.getProduct(), request.getQuantity()),
+                null,
+                request.getProduct(),
+                request.getQuantity(),
+                remaining
+        );
+    }
+
+    private String assignTruck(String product, Integer quantity) {
+        return "TRUCK-" + product.toUpperCase().charAt(0) + "-" + quantity;
     }
 }

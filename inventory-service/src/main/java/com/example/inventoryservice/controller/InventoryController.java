@@ -3,6 +3,7 @@ package com.example.inventoryservice.controller;
 import com.example.inventoryservice.dto.InventoryRequest;
 import com.example.inventoryservice.dto.InventoryResponse;
 import com.example.inventoryservice.service.InventoryService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class InventoryController {
     }
 
     @PostMapping
-    public ResponseEntity<InventoryResponse> process(@RequestBody InventoryRequest request) {
+    public ResponseEntity<InventoryResponse> process(@Valid @RequestBody InventoryRequest request) {
         return ResponseEntity.ok(inventoryService.process(request));
     }
 }
