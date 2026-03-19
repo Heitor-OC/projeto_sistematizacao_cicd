@@ -1,96 +1,82 @@
 package com.example.orderservice.unit.controller;
 
 import com.example.orderservice.controller.OrderController;
+import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.OrderResponse;
+import com.example.orderservice.exception.OrderRejectedException;
 import com.example.orderservice.service.OrderService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.ResponseEntity;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(OrderController.class)
 class OrderControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private OrderService orderService;
-
     @Test
-    void shouldReturnOkWhenRequestIsValid() throws Exception {
-        doNothing().when(orderService).createOrder(any());
+    void shouldReturnOkWhenRequestIsValid() {
+        OrderService orderService = mock(OrderService.class);
+        OrderController controller = new OrderController(orderService);
 
-        mockMvc.perform(post("/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                          "product": "Notebook",
-                          "quantity": 2
-                        }
-                        """))
-                .andExpect(status().isOk());
+        OrderRequest request = new OrderRequest();
+        request.setProduct("Notebook");
+        request.setQuantity(2);
+
+        OrderResponse serviceResponse = new OrderResponse(
+                "Order created successfully",
+                "Notebook",
+                2,
+                "APPROVED",
+                "TRUCK-N-2",
+                8
+        );
+
+        when(orderService.createOrder(request)).thenReturn(serviceResponse);
+
+        ResponseEntity<OrderResponse> response = controller.createOrder(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("Order created successfully", response.getBody().getMessage());
     }
 
     @Test
-    void shouldCallServiceWhenRequestIsValid() throws Exception {
-        doNothing().when(orderService).createOrder(any());
+    void shouldCallServiceWhenRequestIsValid() {
+        OrderService orderService = mock(OrderService.class);
+        OrderController controller = new OrderController(orderService);
 
-        mockMvc.perform(post("/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                          "product": "Mouse",
-                          "quantity": 1
-                        }
-                        """))
-                .andExpect(status().isOk());
+        OrderRequest request = new OrderRequest();
+        request.setProduct("Notebook");
+        request.setQuantity(2);
 
-        verify(orderService, times(1)).createOrder(any());
+        OrderResponse serviceResponse = new OrderResponse(
+                "Order created successfully",
+                "Notebook",
+                2,
+                "APPROVED",
+                "TRUCK-N-2",
+                8
+        );
+
+        when(orderService.createOrder(request)).thenReturn(serviceResponse);
+
+        controller.createOrder(request);
+
+        verify(orderService, times(1)).createOrder(request);
     }
 
     @Test
-    void shouldReturnBadRequestWhenProductIsMissing() throws Exception {
-        mockMvc.perform(post("/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                          "quantity": 1
-                        }
-                        """))
-                .andExpect(status().isBadRequest());
-    }
+    void shouldPropagateExceptionWhenServiceRejectsOrder() {
+        OrderService orderService = mock(OrderService.class);
+        OrderController controller = new OrderController(orderService);
 
-    @Test
-    void shouldReturnBadRequestWhenQuantityIsMissing() throws Exception {
-        mockMvc.perform(post("/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                          "product": "Notebook"
-                        }
-                        """))
-                .andExpect(status().isBadRequest());
-    }
+        OrderRequest request = new OrderRequest();
+        request.setProduct("Notebook");
+        request.setQuantity(20);
 
-    @Test
-    void shouldReturnServerErrorWhenServiceThrowsException() throws Exception {
-        doThrow(new RuntimeException("Order rejected"))
-                .when(orderService).createOrder(any());
+        when(orderService.createOrder(request))
+                .thenThrow(new OrderRejectedException("OUT_OF_STOCK"));
 
-        mockMvc.perform(post("/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                          "product": "Notebook",
-                          "quantity": 20
-                        }
-                        """))
-                .andExpect(status().is5xxServerError());
+        assertThrows(OrderRejectedException.class, () -> controller.createOrder(request));
     }
 }

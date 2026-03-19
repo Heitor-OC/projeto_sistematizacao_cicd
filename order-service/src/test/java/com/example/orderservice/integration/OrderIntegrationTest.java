@@ -4,86 +4,78 @@ import com.example.orderservice.client.InventoryClient;
 import com.example.orderservice.dto.InventoryResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
 class OrderIntegrationTest {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
 
     @MockBean
     private InventoryClient inventoryClient;
 
     @Test
-    void shouldCreateOrderSuccessfully() {
+    void shouldCreateOrderSuccessfully() throws Exception {
         InventoryResponse response = new InventoryResponse();
         response.setStatus("APPROVED");
+        response.setProduct("Notebook");
+        response.setRequestedQuantity(2);
+        response.setTruckId("TRUCK-N-2");
+        response.setRemainingStock(8);
 
         when(inventoryClient.processOrder(any())).thenReturn(response);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> request = new HttpEntity<>("""
-                {
-                  "product": "Notebook",
-                  "quantity": 2
-                }
-                """, headers);
-
-        ResponseEntity<String> result =
-                restTemplate.postForEntity("/orders", request, String.class);
-
-        assertEquals(HttpStatus.OK, result.getStatusCode());
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "product": "Notebook",
+                          "quantity": 2
+                        }
+                        """))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void shouldReturnInternalServerErrorWhenOrderIsRejected() {
+    void shouldReturnBadRequestWhenOrderIsRejected() throws Exception {
         InventoryResponse response = new InventoryResponse();
         response.setStatus("REJECTED");
         response.setReason("OUT_OF_STOCK");
 
         when(inventoryClient.processOrder(any())).thenReturn(response);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> request = new HttpEntity<>("""
-                {
-                  "product": "Notebook",
-                  "quantity": 20
-                }
-                """, headers);
-
-        ResponseEntity<String> result =
-                restTemplate.postForEntity("/orders", request, String.class);
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "product": "Notebook",
+                          "quantity": 20
+                        }
+                        """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void shouldReturnBadRequestForInvalidPayload() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> request = new HttpEntity<>("""
-                {
-                  "product": null,
-                  "quantity": 2
-                }
-                """, headers);
-
-        ResponseEntity<String> result =
-                restTemplate.postForEntity("/orders", request, String.class);
-
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+    void shouldReturnBadRequestForInvalidPayload() throws Exception {
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                          "product": null,
+                          "quantity": 2
+                        }
+                        """))
+                .andExpect(status().isBadRequest());
     }
 }
