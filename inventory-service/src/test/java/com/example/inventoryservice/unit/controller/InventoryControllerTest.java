@@ -28,7 +28,10 @@ class InventoryControllerTest {
     void shouldReturnOkWhenRequestIsValid() throws Exception {
         InventoryResponse response = new InventoryResponse();
         response.setStatus("APPROVED");
-        response.setTruckId("TRUCK-1");
+        response.setTruckId("TRUCK-N-2");
+        response.setProduct("Notebook");
+        response.setRequestedQuantity(2);
+        response.setRemainingStock(8);
 
         when(inventoryService.process(any())).thenReturn(response);
 
@@ -36,7 +39,7 @@ class InventoryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
-                          "product": "borracha",
+                          "product": "Notebook",
                           "quantity": 2
                         }
                         """))
@@ -47,7 +50,10 @@ class InventoryControllerTest {
     void shouldReturnApprovedResponseBody() throws Exception {
         InventoryResponse response = new InventoryResponse();
         response.setStatus("APPROVED");
-        response.setTruckId("TRUCK-1");
+        response.setTruckId("TRUCK-M-1");
+        response.setProduct("Mouse");
+        response.setRequestedQuantity(1);
+        response.setRemainingStock(29);
 
         when(inventoryService.process(any())).thenReturn(response);
 
@@ -55,12 +61,16 @@ class InventoryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
-//                          "product": "caderno",
+                          "product": "Mouse",
                           "quantity": 1
                         }
                         """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("APPROVED"));
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.truckId").value("TRUCK-M-1"))
+                .andExpect(jsonPath("$.product").value("Mouse"))
+                .andExpect(jsonPath("$.requestedQuantity").value(1))
+                .andExpect(jsonPath("$.remainingStock").value(29));
     }
 
     @Test
@@ -68,6 +78,9 @@ class InventoryControllerTest {
         InventoryResponse response = new InventoryResponse();
         response.setStatus("REJECTED");
         response.setReason("OUT_OF_STOCK");
+        response.setProduct("Notebook");
+        response.setRequestedQuantity(50);
+        response.setRemainingStock(10);
 
         when(inventoryService.process(any())).thenReturn(response);
 
@@ -75,12 +88,16 @@ class InventoryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
-                          "product": "caneta",
+                          "product": "Notebook",
                           "quantity": 50
                         }
                         """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("REJECTED"));
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.reason").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.product").value("Notebook"))
+                .andExpect(jsonPath("$.requestedQuantity").value(50))
+                .andExpect(jsonPath("$.remainingStock").value(10));
     }
 
     @Test
@@ -101,7 +118,7 @@ class InventoryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
-                          "product": "livro"
+                          "product": "Keyboard"
                         }
                         """))
                 .andExpect(status().isBadRequest());
