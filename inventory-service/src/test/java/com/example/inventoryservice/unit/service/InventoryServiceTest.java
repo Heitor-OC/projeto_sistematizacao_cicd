@@ -2,26 +2,39 @@ package com.example.inventoryservice.unit.service;
 
 import com.example.inventoryservice.dto.InventoryRequest;
 import com.example.inventoryservice.dto.InventoryResponse;
-import com.example.inventoryservice.repository.InMemoryStockRepository;
+//import com.example.inventoryservice.model.Product;
+import com.example.inventoryservice.model.Product;
+import com.example.inventoryservice.repository.ProductRepository;
 import com.example.inventoryservice.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class InventoryServiceTest {
 
     private InventoryService inventoryService;
+    private ProductRepository productRepository;
 
     @BeforeEach
     void setUp() {
-        InMemoryStockRepository repository = new InMemoryStockRepository();
-        repository.init();
-        inventoryService = new InventoryService(repository);
+        productRepository = mock(ProductRepository.class);
+        inventoryService = new InventoryService(productRepository);
     }
 
     @Test
     void shouldApproveRequestWhenStockIsAvailable() {
+        Product product = new Product();
+        product.setName("Notebook");
+        product.setQuantity(10);
+
+        when(productRepository.findByName("Notebook"))
+                .thenReturn(Optional.of(product));
+
         InventoryRequest request = new InventoryRequest();
         request.setProduct("Notebook");
         request.setQuantity(2);
@@ -34,6 +47,13 @@ class InventoryServiceTest {
 
     @Test
     void shouldRejectRequestWhenStockIsUnavailable() {
+        Product product = new Product();
+        product.setName("Notebook");
+        product.setQuantity(10);
+
+        when(productRepository.findByName("Notebook"))
+                .thenReturn(Optional.of(product));
+
         InventoryRequest request = new InventoryRequest();
         request.setProduct("Notebook");
         request.setQuantity(20);
@@ -46,6 +66,13 @@ class InventoryServiceTest {
 
     @Test
     void shouldAssignTruckWhenRequestIsApproved() {
+        Product product = new Product();
+        product.setName("Notebook");
+        product.setQuantity(10);
+
+        when(productRepository.findByName("Notebook"))
+                .thenReturn(Optional.of(product));
+
         InventoryRequest request = new InventoryRequest();
         request.setProduct("Notebook");
         request.setQuantity(1);
@@ -59,6 +86,13 @@ class InventoryServiceTest {
 
     @Test
     void shouldReturnReasonWhenRequestIsRejected() {
+        Product product = new Product();
+        product.setName("Notebook");
+        product.setQuantity(10);
+
+        when(productRepository.findByName("Notebook"))
+                .thenReturn(Optional.of(product));
+
         InventoryRequest request = new InventoryRequest();
         request.setProduct("Notebook");
         request.setQuantity(99);
@@ -72,6 +106,13 @@ class InventoryServiceTest {
 
     @Test
     void shouldReduceStockWhenRequestIsApproved() {
+        Product product = new Product();
+        product.setName("Notebook");
+        product.setQuantity(10);
+
+        when(productRepository.findByName("Notebook"))
+                .thenReturn(Optional.of(product));
+
         InventoryRequest request = new InventoryRequest();
         request.setProduct("Notebook");
         request.setQuantity(1);
@@ -81,5 +122,7 @@ class InventoryServiceTest {
         assertNotNull(response);
         assertEquals("APPROVED", response.getStatus());
         assertEquals(9, response.getRemainingStock());
+
+        verify(productRepository).save(product); // garante persistência
     }
 }
