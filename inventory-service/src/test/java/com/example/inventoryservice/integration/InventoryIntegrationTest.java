@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class InventoryIntegrationTest {
@@ -15,13 +15,13 @@ class InventoryIntegrationTest {
     private TestRestTemplate restTemplate;
 
     @Test
-    void shouldProcessApprovedRequest() {
+    void shouldApproveRequestWhenStockIsAvailable() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> request = new HttpEntity<>("""
                 {
-                  "product": "Notebook",
+                  "product": "Mouse",
                   "quantity": 2
                 }
                 """, headers);
@@ -30,17 +30,18 @@ class InventoryIntegrationTest {
                 restTemplate.postForEntity("/inventory", request, String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("APPROVED"));
     }
 
     @Test
-    void shouldProcessRejectedRequest() {
+    void shouldRejectRequestWhenStockIsInsufficient() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> request = new HttpEntity<>("""
                 {
-                  "product": "Notebook",
-                  "quantity": 50
+                  "product": "Mouse",
+                  "quantity": 999
                 }
                 """, headers);
 
@@ -48,10 +49,12 @@ class InventoryIntegrationTest {
                 restTemplate.postForEntity("/inventory", request, String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("REJECTED"));
+        assertTrue(response.getBody().contains("OUT_OF_STOCK"));
     }
 
     @Test
-    void shouldReturnBadRequestForInvalidPayload() {
+    void shouldReturnBadRequestWhenPayloadIsInvalid() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -66,5 +69,15 @@ class InventoryIntegrationTest {
                 restTemplate.postForEntity("/inventory", request, String.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnStockList() {
+        ResponseEntity<String> response =
+                restTemplate.getForEntity("/inventory/stock", String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("Mouse"));
+        assertTrue(response.getBody().contains("Keyboard"));
     }
 }

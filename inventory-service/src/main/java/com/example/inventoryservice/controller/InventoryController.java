@@ -20,7 +20,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
     private final ProductRepository repository;
 
-    @GetMapping
+    @GetMapping("/stock")
     public List<Product> getAllProducts() {
         return repository.findAll();
     }

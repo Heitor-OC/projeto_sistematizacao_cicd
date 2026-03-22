@@ -2,6 +2,7 @@ package com.example.inventoryservice.unit.controller;
 
 import com.example.inventoryservice.controller.InventoryController;
 import com.example.inventoryservice.dto.InventoryResponse;
+import com.example.inventoryservice.repository.ProductRepository;
 import com.example.inventoryservice.service.InventoryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ class InventoryControllerTest {
 
     @MockBean
     private InventoryService inventoryService;
+
+    @MockBean
+    private ProductRepository productRepository;
 
     @Test
     void shouldReturnOkWhenRequestIsValid() throws Exception {
