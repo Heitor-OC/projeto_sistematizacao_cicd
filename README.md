@@ -103,6 +103,10 @@ As principais tecnologias utilizadas foram:
 
 # 4. PIPELINE (CI)
 
+<p align="center">
+  <img src="./docs/pipelineci.png"/>
+</p>
+
 Foi implementado um pipeline utilizando GitHub Actions com os seguintes objetivos:
 
 - Executar build automaticamente a cada push  
